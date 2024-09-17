@@ -2,46 +2,56 @@ package task1;
 
 class LocalChannel extends Channel {
     private CircularBuffer buffer;
-    private boolean isDisconnected = false;
+    private boolean isConnected;
 
-    LocalChannel(CircularBuffer buffer) {
-        this.buffer = buffer;
+    public LocalChannel(int bufferSize) {
+        this.buffer = new CircularBuffer(bufferSize);
+        this.isConnected = true;
     }
 
     @Override
     public int read(byte[] bytes, int offset, int length) {
-        if (buffer.empty()) {
-            throw new IllegalStateException("Buffer is empty");
+        if (!isConnected) {
+            throw new IllegalStateException("Channel is disconnected");
         }
+
         int bytesRead = 0;
-        while (!buffer.empty() && bytesRead < length) {
-            bytes[offset + bytesRead] = buffer.pull();
+        for (int i = 0; i < length && !buffer.empty(); i++) {
+            bytes[offset + i] = buffer.pull();
             bytesRead++;
         }
+
         return bytesRead;
     }
 
     @Override
     public int write(byte[] bytes, int offset, int length) {
-        if (buffer.full()) {
-            throw new IllegalStateException("Buffer is full");
+        if (!isConnected) {
+            throw new IllegalStateException("Channel is disconnected");
         }
+
         int bytesWritten = 0;
-        while (!buffer.full() && bytesWritten < length) {
-            buffer.push(bytes[offset + bytesWritten]);
-            bytesWritten++;
+        for (int i = 0; i < length; i++) {
+            if (!buffer.full()) {
+                buffer.push(bytes[offset + i]);
+                bytesWritten++;
+            } else {
+                break; // stop writing when the buffer is full
+            }
         }
+
         return bytesWritten;
     }
 
     @Override
     public void disconnect() {
-        isDisconnected = true;
+        isConnected = false;
     }
 
     @Override
     public boolean disconnected() {
-        return isDisconnected;
+        return !isConnected;
     }
 }
+
 

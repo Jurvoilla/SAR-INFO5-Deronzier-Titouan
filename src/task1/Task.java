@@ -11,7 +11,7 @@ abstract class Task extends Thread {
     }
 
     // Retourne le broker associé à la tâche
-    static Broker getBroker() {
+    Broker getBroker() {
         // Renvoie une instance de Broker
         return null; // À implémenter dans les sous-classes
     }

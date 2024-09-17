@@ -1,24 +1,25 @@
 package task1;
 
 class LocalTask extends Task {
-    private Broker broker;
     private Runnable task;
+    private Broker broker;
 
-    LocalTask(Broker b, Runnable r) {
-        super(b, r);
-        this.broker = b;
-        this.task = r;
+    public LocalTask(Broker broker, Runnable task) {
+        super(broker, task);
+        this.broker = broker;
+        this.task = task;
     }
 
     @Override
     public void run() {
-        // Exécuter la tâche dans un thread séparé
         task.run();
     }
 
-    public static Broker getBroker() {
-        return new LocalBroker("DefaultBroker");
+    @Override
+    public Broker getBroker() {
+        return broker;
     }
 }
+
 
 
