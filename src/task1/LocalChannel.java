@@ -2,16 +2,25 @@ package task1;
 
 class LocalChannel extends Channel {
     private CircularBuffer buffer;
-    private boolean isConnected;
+    private boolean isDisconnected = false;
+    private boolean isRemoteDisconnected = false;
 
     public LocalChannel(int bufferSize) {
         this.buffer = new CircularBuffer(bufferSize);
-        this.isConnected = true;
     }
 
     @Override
-    public int read(byte[] bytes, int offset, int length) {
-        if (!isConnected) {
+    public synchronized int read(byte[] bytes, int offset, int length) {
+        while (buffer.empty() && !isRemoteDisconnected) {
+            try {
+                wait(); // Attend jusqu'à ce qu'il y ait des données à lire
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Channel read interrupted");
+            }
+        }
+
+        if (isDisconnected && buffer.empty()) {
             throw new IllegalStateException("Channel is disconnected");
         }
 
@@ -20,38 +29,42 @@ class LocalChannel extends Channel {
             bytes[offset + i] = buffer.pull();
             bytesRead++;
         }
-
         return bytesRead;
     }
 
     @Override
-    public int write(byte[] bytes, int offset, int length) {
-        if (!isConnected) {
+    public synchronized int write(byte[] bytes, int offset, int length) {
+        if (isDisconnected) {
             throw new IllegalStateException("Channel is disconnected");
         }
 
         int bytesWritten = 0;
-        for (int i = 0; i < length; i++) {
-            if (!buffer.full()) {
-                buffer.push(bytes[offset + i]);
-                bytesWritten++;
-            } else {
-                break; // stop writing when the buffer is full
-            }
+        for (int i = offset; i < offset + length && !buffer.full(); i++) {
+            buffer.push(bytes[i]);
+            bytesWritten++;
         }
 
+        notifyAll(); // Notifie toute tâche bloquée en attente de lecture
         return bytesWritten;
     }
 
     @Override
-    public void disconnect() {
-        isConnected = false;
+    public synchronized void disconnect() {
+        isDisconnected = true;
+        notifyAll(); // Notifie toutes les tâches bloquées sur des opérations en attente
     }
 
     @Override
-    public boolean disconnected() {
-        return !isConnected;
+    public synchronized boolean disconnected() {
+        return isDisconnected;
+    }
+
+    // Appelée lorsqu'une déconnexion à distance est détectée
+    public synchronized void remoteDisconnect() {
+        isRemoteDisconnected = true;
+        notifyAll(); // Permet de libérer les lectures bloquées
     }
 }
+
 
 

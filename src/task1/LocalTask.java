@@ -1,26 +1,20 @@
 package task1;
 
 class LocalTask extends Task {
+    private Runnable task;
 
     public LocalTask(Broker broker, Runnable task) {
         super(broker, task);
+        this.broker = broker;
+        this.task = task;
     }
 
     @Override
     public void run() {
-        this.runnable.run();
+        task.run();
     }
-    
-//    public void store() {
-//        long runnableID = Thread.currentThread().getId();
-//    	Task.storeThread(runnableID, task);
-//    }
-//    
-//    public void delete() {
-//    	long runnableID = Thread.currentThread().getId();
-//    	Task.deleteThread(runnableID, task);
-//    }
 }
+
 
 
 

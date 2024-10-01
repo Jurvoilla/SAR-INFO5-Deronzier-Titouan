@@ -12,42 +12,32 @@ class LocalBroker extends Broker {
 
     @Override
     public synchronized Channel accept(int port) {
-        System.out.println("[Broker: " + this + "] Accepting on port " + port);
-
         // Attend jusqu'à ce qu'un channel soit créé pour ce port
         while (!channels.containsKey(port)) {
             try {
-                System.out.println("[Broker: " + this + "] Waiting for connection on port " + port + ". Current channels: " + channels);
-                wait(); // Attente bloquante jusqu'à ce qu'une connexion soit disponible
+                System.out.println("[Broker: " + this + "] Waiting for connection on port " + port);
+                wait(); // Bloque jusqu'à ce qu'un connect soit fait sur ce port
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt(); // Gérer l'interruption
-                return null;
+                Thread.currentThread().interrupt();
+                return null; // Retourne null en cas d'interruption
             }
         }
 
-        // Un channel est disponible, on le retire de la map et le retourne
-        System.out.println("[Broker: " + this + "] Channel found for port " + port + ". Proceeding with connection.");
+        // Un canal est disponible, on le retire de la map et le retourne
         return channels.remove(port);
     }
 
     @Override
     public synchronized Channel connect(String name, int port) {
-        System.out.println("[Broker: " + this + "] Connecting to port " + port + " on broker " + name);
+        // Crée un canal pour la communication
+        LocalChannel channel = new LocalChannel(1024); // Taille du buffer 1024 octets
+        channels.put(port, channel);  // Enregistre le canal dans la map des connexions
 
-        // Crée un channel pour la communication
-        LocalChannel channel = new LocalChannel(1024); // Buffer de taille fixe, par exemple 1024 octets
-
-        // Enregistre le channel dans la liste des connexions en attente sur le port
-        channels.put(port, channel);
-        System.out.println("[Broker: " + this + "] Channel added to channels map for port " + port + ". Channels now: " + channels);
-
-        // Notifie la tâche qui attend une connexion
-        notifyAll(); // Réveiller le thread dans accept() qui attend une connexion
-        System.out.println("[Broker: " + this + "] Notified waiting threads.");
-
-        // Retourne immédiatement le channel sans attente supplémentaire
+        // Notifie la tâche qui attend une connexion via accept()
+        notifyAll();
         return channel;
     }
 }
+
 
 
