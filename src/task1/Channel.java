@@ -1,6 +1,6 @@
 package task1;
 
-abstract class Channel {
+public abstract class Channel {
     // Lit des octets à partir du canal
     abstract int read(byte[] bytes, int offset, int length);
     

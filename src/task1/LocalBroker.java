@@ -4,38 +4,58 @@ import java.util.HashMap;
 import java.util.Map;
 
 class LocalBroker extends Broker {
-    private final Map<Integer, LocalChannel> channels = new HashMap<>();
+    private final Map<Integer, Channel[]> channels = new HashMap<>(); // 2 Channels: [LocalWrite, RemoteWrite]
 
     public LocalBroker(String name) {
         super(name);
+        BrokerManager.registerBroker(name, this); // Enregistrer le broker
     }
 
     @Override
     public synchronized Channel accept(int port) {
-        // Attend jusqu'à ce qu'un channel soit créé pour ce port
+        // Attendre que le channel correspondant soit créé pour ce port
         while (!channels.containsKey(port)) {
             try {
                 System.out.println("[Broker: " + this + "] Waiting for connection on port " + port);
-                wait(); // Bloque jusqu'à ce qu'un connect soit fait sur ce port
+                wait(); // Bloque jusqu'à ce qu'un channel soit créé pour ce port
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 return null; // Retourne null en cas d'interruption
             }
         }
 
-        // Un canal est disponible, on le retire de la map et le retourne
-        return channels.remove(port);
+        // Retourne le canal pour écrire du côté local
+        return channels.get(port)[0]; // LocalWrite
     }
 
     @Override
-    public synchronized Channel connect(String name, int port) {
-        // Crée un canal pour la communication
-        LocalChannel channel = new LocalChannel(1024); // Taille du buffer 1024 octets
-        channels.put(port, channel);  // Enregistre le canal dans la map des connexions
+    public synchronized Channel connect(String remoteBrokerName, int port) {
+        System.out.println("[Broker: " + this + "] Connecting to broker " + remoteBrokerName + " on port " + port);
 
-        // Notifie la tâche qui attend une connexion via accept()
-        notifyAll();
-        return channel;
+        // Rechercher le broker distant via le BrokerManager
+        Broker remoteBroker = BrokerManager.getBroker(remoteBrokerName);
+        if (remoteBroker == null) {
+            System.out.println("[Broker: " + this + "] No such remote broker found.");
+            return null;
+        }
+
+        // Crée deux channels, un pour chaque côté
+        int bufferSize = 1024;
+        CircularBuffer cb1 = new CircularBuffer(bufferSize);
+        CircularBuffer cb2 = new CircularBuffer(bufferSize);
+        LocalChannel localChannel = new LocalChannel(1024, cb1, cb2); // Ecriture locale, lecture distante
+        LocalChannel remoteChannel = new LocalChannel(1024, cb2, cb1); // Ecriture distante, lecture locale
+
+        // Établir la connexion bidirectionnelle
+        synchronized (remoteBroker) {
+            ((LocalBroker) remoteBroker).channels.put(port, new Channel[]{remoteChannel, localChannel});
+            remoteBroker.notifyAll(); // Notifie le broker distant qu'une connexion est prête
+        }
+
+        // Enregistrer les deux canaux localement
+        channels.put(port, new Channel[]{localChannel, remoteChannel}); // LocalWrite, RemoteWrite
+
+        return localChannel; // Retourne le canal local pour l'écriture
     }
 }
 

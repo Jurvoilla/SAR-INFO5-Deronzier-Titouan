@@ -1,6 +1,6 @@
 package task1;
 
-abstract class Broker {
+public abstract class Broker {
     String name;
     
     // Constructeur

@@ -3,7 +3,7 @@ package task1;
 import java.util.HashMap;
 import java.util.Map;
 
-abstract class Task extends Thread {
+public abstract class Task extends Thread {
 	protected Broker broker;
     protected Runnable runnable;
 

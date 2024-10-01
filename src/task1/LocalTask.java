@@ -1,6 +1,6 @@
 package task1;
 
-class LocalTask extends Task {
+public class LocalTask extends Task {
     private Runnable task;
 
     public LocalTask(Broker broker, Runnable task) {
