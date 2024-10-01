@@ -45,6 +45,9 @@ class LocalBroker extends Broker {
         CircularBuffer cb2 = new CircularBuffer(bufferSize);
         LocalChannel localChannel = new LocalChannel(1024, cb1, cb2); // Ecriture locale, lecture distante
         LocalChannel remoteChannel = new LocalChannel(1024, cb2, cb1); // Ecriture distante, lecture locale
+        localChannel.setRemoteChannel(remoteChannel);
+        remoteChannel.setRemoteChannel(localChannel);
+        
 
         // Établir la connexion bidirectionnelle
         synchronized (remoteBroker) {

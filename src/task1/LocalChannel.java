@@ -4,10 +4,15 @@ class LocalChannel extends Channel {
     private CircularBuffer writeBuffer;
     private CircularBuffer readBuffer;
     private boolean isDisconnected = false;
+    private LocalChannel remoteChannel;
 
     public LocalChannel(int bufferSize, CircularBuffer writeBuffer, CircularBuffer readBuffer) {
         this.writeBuffer = writeBuffer; // Local Write, Remote Read
         this.readBuffer = readBuffer;  // Local Read, Remote Write
+    }
+    
+    public synchronized void setRemoteChannel(LocalChannel remoteChannel) {
+        this.remoteChannel = remoteChannel;
     }
 
     @Override
@@ -15,6 +20,7 @@ class LocalChannel extends Channel {
         while (readBuffer.empty() && !isDisconnected) {
             try {
                 wait(); // Attend qu'il y ait des données à lire ou que le canal soit déconnecté
+                System.out.println("I am Notify");
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new IllegalStateException("Channel read interrupted");
@@ -30,6 +36,13 @@ class LocalChannel extends Channel {
             bytes[offset + i] = readBuffer.pull();
             bytesRead++;
         }
+        
+        if (remoteChannel != null) {
+            synchronized (remoteChannel) {
+                remoteChannel.notifyAll();
+            }
+        }
+        
         return bytesRead;
     }
 
@@ -45,7 +58,13 @@ class LocalChannel extends Channel {
             bytesWritten++;
         }
 
-        notifyAll(); // Notifie les tâches en attente de lecture
+        notifyAll();
+        if (remoteChannel != null) {
+            synchronized (remoteChannel) {
+                remoteChannel.notifyAll();
+            }
+        }
+        
         return bytesWritten;
     }
 
@@ -57,6 +76,11 @@ class LocalChannel extends Channel {
             bytesReceived++;
         }
         notifyAll(); // Notifie toute tâche bloquée en attente de données à lire
+        if (remoteChannel != null) {
+            synchronized (remoteChannel) {
+                remoteChannel.notifyAll();
+            }
+        }
     }
 
     @Override

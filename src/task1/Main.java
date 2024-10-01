@@ -6,6 +6,7 @@ public class Main {
 	public static void main(String[] args) {
 		test1();
 		test2();
+		test3();
     }
 	
 	public static void test1() {
@@ -61,7 +62,7 @@ public class Main {
             byte[] buffer = new byte[1024];
             int bytesRead = channel.read(buffer, 0, buffer.length);
             System.out.println("Task 4 received: " + new String(buffer, 0, bytesRead));
-            byte[] message = "Hello from Task 1".getBytes();
+            byte[] message = "Hello from Task 4".getBytes();
             channel.write(message, 0, message.length);
             System.out.println("Task 4 sent message.");
             channel.disconnect();
@@ -70,6 +71,18 @@ public class Main {
 
         task1.start();
         task2.start();
+	}
+	
+	public static void test3() {
+        System.out.println("Test3");
+        
+        Broker brokerBroken1 = new LocalBroker("BrokerBroken1");
+
+        Task task1 = new LocalTask(brokerBroken1, () -> {
+            Channel channel = brokerBroken1.connect("BrokerBroken", 7000);
+        });
+
+        task1.start();
 	}
 }
 
