@@ -3,7 +3,7 @@ package task1;
 import java.util.HashMap;
 import java.util.Map;
 
-class LocalBroker extends Broker {
+public class LocalBroker extends Broker {
     private final Map<Integer, Channel[]> channels = new HashMap<>(); // 2 Channels: [LocalWrite, RemoteWrite]
 
     public LocalBroker(String name) {

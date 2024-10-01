@@ -8,9 +8,13 @@ public abstract class Broker {
         this.name = name;
     }
     
+    public String name() {
+    	return this.name;
+    }
+    
     // Accepte une connexion sur un port donné et retourne un channel pour cette connexion
-    abstract Channel accept(int port);
+    public abstract Channel accept(int port);
     
     // Se connecte à un autre broker via un nom et un port, retourne un channel pour cette connexion
-    abstract Channel connect(String name, int port);
+    public abstract Channel connect(String name, int port);
 }
