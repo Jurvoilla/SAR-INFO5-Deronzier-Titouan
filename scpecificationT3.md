@@ -30,7 +30,7 @@ abstract class MessageQueue {
 
 ------------------------------------------------SPEC TASK 3-------------------------------------------------------------
 
-1. Spécification de QueueBroker
+1. Spécification de QueueBroker 
 Le QueueBroker est responsable de la gestion des connexions entre les tâches pour l'envoi et la réception de messages via des listeners. Il permet à une tâche d'attendre des connexions entrantes (via un AcceptListener) ou d'établir des connexions sortantes (via un ConnectListener).
 
 Méthodes et interfaces de QueueBroker :
