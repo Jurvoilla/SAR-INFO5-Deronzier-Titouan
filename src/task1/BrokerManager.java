@@ -3,7 +3,7 @@ package task1;
 import java.util.HashMap;
 import java.util.Map;
 
-class BrokerManager {
+public class BrokerManager {
     private static Map<String, Broker> brokers = new HashMap<>();
 
     public static synchronized void registerBroker(String name, Broker broker) {

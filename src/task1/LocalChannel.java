@@ -1,6 +1,6 @@
 package task1;
 
-class LocalChannel extends Channel {
+public class LocalChannel extends Channel {
     private CircularBuffer writeBuffer;
     private CircularBuffer readBuffer;
     private boolean isDisconnected = false;
